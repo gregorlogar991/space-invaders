@@ -7,7 +7,7 @@ shape = [
     "XXXXXXXXXXX",
     "XXXXXXXXXXX",
     "XXX_____XXX",
-    "XX_______XX"
+    "XX_______XX",
 ]
 
 

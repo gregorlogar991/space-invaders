@@ -22,13 +22,35 @@ class Game:
         print(start)
         self.position_obstacles(*self.obstacle_positions, x_start=start, y_start=480)
 
+        self.aliens_direction = 1
         self.aliens = pygame.sprite.Group()
-        self.create_aliens(rows = 6, cols = 8)
+        self.create_aliens(lvl1)
 
-    def create_aliens(self, rows, cols, x_dist = 60, y_dist = 48, x_margin = 70, y_margin = 50):
-        for row in range(rows):
-            for column in range(cols):
-                self.aliens.add(Alien("red", column * x_dist + x_margin, row * y_dist + y_margin))
+    def alien_position(self):
+        for alien in self.aliens.sprites():
+            if alien.rect.right >= screen_width:
+                self.alien_advance_forward(2)
+                self.aliens_direction = -1
+            if alien.rect.left <= 0:
+                self.alien_advance_forward(2)
+                self.aliens_direction = 1
+
+    def alien_advance_forward(self, dist):
+        if self.aliens:
+            for alien in self.aliens.sprites():
+                alien.rect.y += dist
+
+    def create_aliens(self, lvl, x_dist=60, y_dist=48, x_margin=70, y_margin=50):
+        for index_r, row in enumerate(lvl):
+            for index_c, col in enumerate(row):
+                color = ""
+                if col == "Y":
+                    color = "yellow"
+                elif col == "G":
+                    color = "green"
+                else:
+                    color = "red"
+                self.aliens.add(Alien(color, index_c * x_dist + x_margin, index_r * y_dist + y_margin))
 
     def position_obstacles(self, *args, x_start, y_start):
         for x_margin in args:
@@ -39,16 +61,20 @@ class Game:
         for r_index, row in enumerate(self.shape):
             for c_index, column in enumerate(row):
                 if column == "X":
-                    self.blocks.add(obstacle.Block(self.block_size, (241, 79, 80), x + x_margin + c_index * self.block_size,
-                                          y +  r_index * self.block_size))
+                    self.blocks.add(
+                        obstacle.Block(self.block_size, (241, 79, 80), x + x_margin + c_index * self.block_size,
+                                       y + r_index * self.block_size))
 
     def run(self):
         self.player.update()
+        self.alien_position()
+        self.aliens.update(self.aliens_direction)
 
         self.player.sprite.lasers.draw(screen)
         self.player.draw(screen)
         self.blocks.draw(screen)
         self.aliens.draw(screen)
+
 
 if __name__ == '__main__':
     pygame.init()

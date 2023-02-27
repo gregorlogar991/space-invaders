@@ -17,4 +17,3 @@ class Laser(pygame.sprite.Sprite):
     def destroy(self):
         if self.rect.y <= -20 or self.rect.y >= self.screen_height + 20:
             self.kill()
-
