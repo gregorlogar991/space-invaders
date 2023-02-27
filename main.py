@@ -1,10 +1,11 @@
 import sys
 
 import pygame.sprite
-
+from random import choice, randint
 from player import *
 import obstacle
 from alien import *
+from laser import Laser
 
 
 class Game:
@@ -17,14 +18,26 @@ class Game:
         self.blocks = pygame.sprite.Group()
         obstacle_n = 4
         self.obstacle_positions = [x * (screen_width / obstacle_n) for x in range(obstacle_n)]
-        print(self.obstacle_positions)
         start = ((screen_width / obstacle_n) - (self.block_size * 10)) / 2
-        print(start)
         self.position_obstacles(*self.obstacle_positions, x_start=start, y_start=480)
 
         self.aliens_direction = 1
         self.aliens = pygame.sprite.Group()
         self.create_aliens(lvl1)
+        self.alien_lasers = pygame.sprite.Group()
+
+        self.boss = pygame.sprite.GroupSingle()
+        self.boss_spawn_time = randint(40, 80)
+
+    def boss_timer(self):
+        self.boss_spawn_time -= 1
+        if self.boss_spawn_time <= 0:
+            self.boss.add(Boss(choice(["left", "right"]), screen_width))
+            print("BOSS CREATED")
+            self.boss_spawn_time = randint(400, 800)
+    def alien_shoot(self):
+        if self.aliens:
+            self.alien_lasers.add(Laser(screen_height, choice(self.aliens.sprites()).rect.center, -6))
 
     def alien_position(self):
         for alien in self.aliens.sprites():
@@ -43,7 +56,6 @@ class Game:
     def create_aliens(self, lvl, x_dist=60, y_dist=48, x_margin=70, y_margin=50):
         for index_r, row in enumerate(lvl):
             for index_c, col in enumerate(row):
-                color = ""
                 if col == "Y":
                     color = "yellow"
                 elif col == "G":
@@ -67,14 +79,19 @@ class Game:
 
     def run(self):
         self.player.update()
-        self.alien_position()
         self.aliens.update(self.aliens_direction)
+        self.alien_lasers.update()
+        self.boss.update()
+
+        self.alien_position()
+        self.boss_timer()
 
         self.player.sprite.lasers.draw(screen)
         self.player.draw(screen)
         self.blocks.draw(screen)
         self.aliens.draw(screen)
-
+        self.alien_lasers.draw(screen)
+        self.boss.draw(screen)
 
 if __name__ == '__main__':
     pygame.init()
@@ -85,12 +102,16 @@ if __name__ == '__main__':
 
     game = Game()
 
+    ALIEN_LASER = pygame.USEREVENT + 1
+    pygame.time.set_timer(ALIEN_LASER, 800)
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-
+            if event.type == ALIEN_LASER:
+                game.alien_shoot()
         screen.fill((30, 30, 30))
         game.run()
 
