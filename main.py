@@ -13,6 +13,15 @@ class Game:
         self.player = pygame.sprite.GroupSingle(
             Player((screen_width / 2, screen_height), screen_width, screen_height, 5))
 
+        self.lives = 3
+        self.live_surf = pygame.image.load("images/live.png").convert_alpha()
+        self.live_x_start = screen_width - (self.live_surf.get_size()[0] * 3 + 20)
+
+        self.score = 0
+        self.font = pygame.font.Font("font/Pixeled.ttf", 20)
+
+        self.level = 1
+
         self.shape = obstacle.shape
         self.block_size = 6
         self.blocks = pygame.sprite.Group()
@@ -29,12 +38,62 @@ class Game:
         self.boss = pygame.sprite.GroupSingle()
         self.boss_spawn_time = randint(40, 80)
 
+    def won(self):
+        if not self.aliens.sprites():
+            won_surf = self.font.render(f"You finished lvl {self.level}.", False, "white")
+            won_rect = won_surf.get_rect(center=(screen_width / 2, screen_height / 2))
+            screen.blit(won_surf, won_rect)
+
+    def display_lives(self):
+        for live in range(self.lives):
+            screen.blit(self.live_surf, (self.live_x_start + (live * self.live_surf.get_size()[0]) + 10,8))
+
+    def display_score(self):
+        score_surf = self.font.render(f"score: {self.score}", False, "white")
+        score_rect = score_surf.get_rect(topleft=(10, -10))
+        screen.blit(score_surf, score_rect)
+    def collission(self):
+        if self.player.sprite.lasers:
+            for laser in self.player.sprite.lasers:
+                if pygame.sprite.spritecollide(laser, self.blocks, True):
+                    laser.kill()
+
+                alien_hit = pygame.sprite.spritecollide(laser, self.aliens, True)
+                if alien_hit:
+                    for alien in alien_hit:
+                        self.score += alien.value
+                    laser.kill()
+
+                if pygame.sprite.spritecollide(laser, self.boss, True):
+                    laser.kill()
+                    self.score += 500
+
+        if self.alien_lasers:
+            for laser in self.alien_lasers.sprites():
+                if pygame.sprite.spritecollide(laser, self.blocks, True):
+                    laser.kill()
+
+                if pygame.sprite.spritecollide(laser, self.player, False):
+                    self.lives -= 1
+                    laser.kill()
+                    if self.lives == 0:
+                        pygame.quit()
+                        sys.exit()
+
+        if self.aliens:
+            for alien in self.aliens:
+                pygame.sprite.spritecollide(alien, self.blocks, True)
+
+                if pygame.sprite.spritecollide(alien, self.player, False):
+                    pygame.quit()
+                    sys.exit()
+
     def boss_timer(self):
         self.boss_spawn_time -= 1
         if self.boss_spawn_time <= 0:
             self.boss.add(Boss(choice(["left", "right"]), screen_width))
-            print("BOSS CREATED")
             self.boss_spawn_time = randint(400, 800)
+
     def alien_shoot(self):
         if self.aliens:
             self.alien_lasers.add(Laser(screen_height, choice(self.aliens.sprites()).rect.center, -6))
@@ -66,7 +125,6 @@ class Game:
 
     def position_obstacles(self, *args, x_start, y_start):
         for x_margin in args:
-            print(x_margin)
             self.create_obstacle(x_start, y_start, x_margin)
 
     def create_obstacle(self, x, y, x_margin):
@@ -83,8 +141,12 @@ class Game:
         self.alien_lasers.update()
         self.boss.update()
 
+        self.collission()
         self.alien_position()
         self.boss_timer()
+        self.display_lives()
+        self.display_score()
+        self.won()
 
         self.player.sprite.lasers.draw(screen)
         self.player.draw(screen)

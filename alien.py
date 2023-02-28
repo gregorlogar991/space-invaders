@@ -7,6 +7,10 @@ class Alien(pygame.sprite.Sprite):
         self.image = pygame.image.load(f"images/{color}.png").convert_alpha()
         self.rect = self.image.get_rect(topleft=(x, y))
 
+        if color == "red": self.value = 100
+        elif color == "green": self.value = 200
+        else: self.value = 300
+
     def update(self, direction):
         self.rect.x += direction
 
@@ -27,11 +31,16 @@ class Boss(pygame.sprite.Sprite):
         self.rect.x += self.speed
 
 
+# lvl1 = [
+#     "YYYYYYYY",
+#     "GGGGGGGG",
+#     "GGGGGGGG",
+#     "RRRRRRRR",
+#     "RRRRRRRR",
+#     "RRRRRRRR",
+# ]
 lvl1 = [
-    "YYYYYYYY",
-    "GGGGGGGG",
-    "GGGGGGGG",
-    "RRRRRRRR",
-    "RRRRRRRR",
-    "RRRRRRRR",
+    "YY",
+    "GG",
+    "GG",
 ]
